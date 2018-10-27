@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>DES Encryption Example</title>
+
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/magnific-popup.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/creative.min.css') }}" rel="stylesheet">
+    <script src={{ url_for('static', filename='js/jquery.min.js') }}></script>
+    <script src={{ url_for('static', filename='js/popper.min.js') }}></script>
+    <script src={{ url_for('static', filename='js/bootstrap.min.js') }}></script>
+
+
+</head>
+
+<nav class="navbar navbar-dark navbar-expand-lg navbar-collapse fixed-top bg-dark" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="/">Home</a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link js-scroll-trigger" href="{{ url_for('static', filename='DES_Example_Description.pdf') }}">Description</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link js-scroll-trigger" href="https://github.com/EErikas/PythonDES_Example">View code</a>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
+<br>
+
+<body id="page-top">
+<div class="container">
+    <h1 class="mt-5">DES algorithm example</h1>
+    <p class="lead">This is meant to be used as an educational tool not as actual encryption software</p>
+    <form action="/" method="post">
+        <div class="form-group row">
+
+
+            <label for="message" class="col-2 col-form-label">Message</label>
+            <div class="col-10">
+                <input class="form-control" type="text" value="{{ message if message else '123456ABCD132536' }}" name="message" required>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="key" class="col-2 col-form-label">Key</label>
+            <div class="col-10">
+                <input class="form-control" type="text" value="{{ key if key else 'AABB09182736CCDD' }}" name="key" required>
+            </div>
+        </div>
+        <p class="lead">Choose action</p>
+        <div class="radio">
+            <label><input type="radio" name="action_options" value="encrypt">Encrypt</label>
+        </div>
+        <div class="radio">
+            <label><input type="radio" name="action_options" value="decrypt">Decrypt</label>
+        </div>
+        <div class="radio">
+            <label><input type="radio" name="action_options" value="encrypt-decrypt" checked>Encrypt and Decrypt</label>
+        </div>
+        <br>
+        <div class="col-lg-10">
+            <input class="btn btn-success btn-lg" type='submit'>
+        </div>
+    </form>
+    <br>
+
+    {% if error_no=='1' %}
+        <div class="col-lg-12 text-center mt-5">
+            <label class="col-lg-10 col-form-label alert-danger">You must fill in all fields</label>
+        </div>
+
+    {% elif error_no=='2' %}
+        <div class="col-lg-12 text-center mt-5">
+            <label class="col-lg-10 col-form-label alert-danger">Key field is not a hexadecimal integer</label>
+        </div>
+    {% endif %}
+
+    {% if errors %}
+        {% for error in errors %}
+            <div class="col-lg-12 text-center mt-5">
+                <label class="col-lg-10 col-form-label alert-danger">{{ error }}</label>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+
+
+    {% if encryption_values %}
+        {% set list_length = encryption_values['Values']|length %}
+        <h4>Encryption:</h4>
+        <table class="table">
+
+            <tr>
+                <td>Message (hex):</td>
+                <td><b>{{ message }}</b></td>
+            </tr>
+            <tr>
+                <td>Key:</td>
+                <td><b>{{ key }}</b></td>
+            </tr>
+
+
+        </table>
+
+        <br>
+
+        <table class="table">
+
+            <thead class="thead-dark text-center">
+            <tr>
+                <th scope="col" rowspan="2">Round</th>
+                {% for foo in range(list_length) %}
+                    <th scope="col" colspan="2">Block #{{ foo + 1 }}</th>
+                {% endfor %}
+                <th scope="col" rowspan="2">Key</th>
+            </tr>
+            <tr>
+                {% for foo in range(list_length) %}
+                    <th scope="col">Left</th>
+                    <th scope="col">Right</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for foo in range(17) %}
+                <tr>
+                    <td>{{ foo }}</td>
+                    {% for bar in encryption_values['Values'] %}
+
+                        <td>{{ bar['left_rounds'][foo] }}</td>
+                        <td>{{ bar['right_rounds'][foo] }}</td>
+
+                    {% endfor %}
+                    <td>{{ encryption_values['Keys'][foo] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+            <tfoot>
+            <tr>
+                <td colspan="2"><b>Cipher <br>(after final permutation):</b></td>
+                <td colspan="{{ list_length * 2 }}"><b>{{ encryption_values['Cipher'] }}</b></td>
+            </tr>
+            </tfoot>
+        </table>
+
+    {% endif %}
+
+
+    {% if decryption_values %}
+        {% set list_length = decryption_values['Values']|length %}
+        <h4>Decryption:</h4>
+        <table class="table ">
+            <tr>
+                <td>Message (hex):</td>
+                <td><b>{{ encryption_values['Cipher'] if encryption_values else message }}</b></td>
+            </tr>
+            <tr>
+                <td>Key:</td>
+                <td><b>{{ key }}</b></td>
+            </tr>
+
+
+        </table>
+
+        <table class="table">
+            <thead class="thead-dark text-center">
+            <tr>
+                <th scope="col" rowspan="2">Round</th>
+                {% for foo in range(list_length) %}
+                    <th scope="col" colspan="2">Block #{{ foo + 1 }}</th>
+                {% endfor %}
+                <th scope="col" rowspan="2">Key</th>
+            </tr>
+            <tr>
+                {% for foo in range(list_length) %}
+                    <th scope="col">Left</th>
+                    <th scope="col">Right</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for foo in range(17) %}
+                <tr>
+                    <td>{{ foo }}</td>
+                    {% for bar in decryption_values['Values'] %}
+
+                        <td>{{ bar['left_rounds'][foo] }}</td>
+                        <td>{{ bar['right_rounds'][foo] }}</td>
+
+                    {% endfor %}
+                    <td>{{ decryption_values['Keys'][16 - foo] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+            <tfoot>
+            <tr>
+                <td colspan="2"><b>Cipher <br>(after final permutation):</b></td>
+                <td colspan="{{ list_length * 2 }}"><b>{{ decryption_values['Cipher'] }}</b></td>
+            </tr>
+            </tfoot>
+        </table>
+
+    {% endif %}
+
+</div>
+{% block content %}
+{% endblock %}
+
+</body>
+
+</html>
